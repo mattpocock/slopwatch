@@ -25,61 +25,61 @@ The right strategy is **per-agent adapters, each using that agent's most stable 
 
 ### Claude Code
 
-| Surface | Status |
-|---|---|
-| Hooks | 24+ events (`SessionStart`, `PostToolUse`, `SubagentStop`, etc.). Payloads include `session_id`, `transcript_path`, event-specific fields — **but not full message content**. |
-| On-disk transcript | `~/.claude/projects/<hash>/<session-uuid>.jsonl`. Schema **undocumented**, reverse-engineered by community. |
-| OpenTelemetry | Rich. Spans (`claude_code.interaction`, `llm_request`, `tool`, `hook`), metrics, log events. Prompts/tool content opt-in via env vars. |
-| Live streaming | No native spectate API. Tail JSONL or stream OTel spans (~5s batching). |
-| Proxy | Not viable (Anthropic auth). |
+| Surface            | Status                                                                                                                                                                        |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hooks              | 24+ events (`SessionStart`, `PostToolUse`, `SubagentStop`, etc.). Payloads include `session_id`, `transcript_path`, event-specific fields — **but not full message content**. |
+| On-disk transcript | `~/.claude/projects/<hash>/<session-uuid>.jsonl`. Schema **undocumented**, reverse-engineered by community.                                                                   |
+| OpenTelemetry      | Rich. Spans (`claude_code.interaction`, `llm_request`, `tool`, `hook`), metrics, log events. Prompts/tool content opt-in via env vars.                                        |
+| Live streaming     | No native spectate API. Tail JSONL or stream OTel spans (~5s batching).                                                                                                       |
+| Proxy              | Not viable (Anthropic auth).                                                                                                                                                  |
 
-**Takeaway.** Hooks identify *when* things happen but can't carry the content — full reconstruction requires reading the JSONL anyway. JSONL tail is mandatory; hooks are useful as triggers (session end → upload) and for OTel-style aggregates.
+**Takeaway.** Hooks identify _when_ things happen but can't carry the content — full reconstruction requires reading the JSONL anyway. JSONL tail is mandatory; hooks are useful as triggers (session end → upload) and for OTel-style aggregates.
 
 ### OpenAI Codex CLI
 
-| Surface | Status |
-|---|---|
-| Hooks | `hooks.json` system with `PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`Stop`. **Flag-gated (`codex_hooks`), off by default, Windows-excluded.** Also a stable `notify` config for lifecycle events. |
+| Surface            | Status                                                                                                                                                                                                                             |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hooks              | `hooks.json` system with `PreToolUse`/`PostToolUse`/`UserPromptSubmit`/`Stop`. **Flag-gated (`codex_hooks`), off by default, Windows-excluded.** Also a stable `notify` config for lifecycle events.                               |
 | On-disk transcript | `$CODEX_HOME/sessions/YYYY/MM/DD/rollout-<uuid>.jsonl`. Schema **documented-but-evolving**; treated as semi-stable; resumes survive across versions. Rich event types (`turn.started`, `item.*`, token usage on `turn.completed`). |
-| OpenTelemetry | Opt-in via `[otel]` config block. OTLP HTTP/gRPC. Emits conversation/request/tool events. `codex exec` emits no metrics; `codex mcp-server` emits nothing. |
-| Live streaming | `codex exec --json` streams JSONL on stdout. `codex app-server` RPC is the cleanest live-observe channel. |
-| Proxy | Viable. `openai_base_url` or custom `[model_providers.proxy]`. Gateway integrations (Kong/LiteLLM) documented. |
+| OpenTelemetry      | Opt-in via `[otel]` config block. OTLP HTTP/gRPC. Emits conversation/request/tool events. `codex exec` emits no metrics; `codex mcp-server` emits nothing.                                                                         |
+| Live streaming     | `codex exec --json` streams JSONL on stdout. `codex app-server` RPC is the cleanest live-observe channel.                                                                                                                          |
+| Proxy              | Viable. `openai_base_url` or custom `[model_providers.proxy]`. Gateway integrations (Kong/LiteLLM) documented.                                                                                                                     |
 
 **Takeaway.** JSONL tailing is the right primary: always on, complete, schema is the same as `--json` stdout output. Hooks too brittle to depend on given flag/Windows gaps. OTel is useful as a complement for live spans where enabled.
 
 ### Pi (`@mariozechner/pi-coding-agent`)
 
-| Surface | Status |
-|---|---|
-| Hooks | First-class `pi.on(event, handler)` TypeScript extension API. Rich events: session lifecycle, agent/turn, tool_call/result (mutable, middleware-style), `before_provider_request`/`after_provider_response`. |
-| On-disk transcript | `~/.pi/agent/sessions/--<cwd-slug>--/<ts>_<uuid>.jsonl`. Tree-structured DAG. **Documented, versioned schema: v1→v2→v3.** Schema has changed 3x; 0.67.6 is current. |
-| OpenTelemetry | None. `pi --mode json` gives a typed stdout event stream instead. |
-| Live streaming | `pi --mode rpc` (LF-delimited JSONL, bidirectional). In-process SDK via `createAgentSessionRuntime()`. |
-| Proxy | Viable. Custom providers configured in `~/.pi/agent/models.json`. |
+| Surface            | Status                                                                                                                                                                                                       |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Hooks              | First-class `pi.on(event, handler)` TypeScript extension API. Rich events: session lifecycle, agent/turn, tool_call/result (mutable, middleware-style), `before_provider_request`/`after_provider_response`. |
+| On-disk transcript | `~/.pi/agent/sessions/--<cwd-slug>--/<ts>_<uuid>.jsonl`. Tree-structured DAG. **Documented, versioned schema: v1→v2→v3.** Schema has changed 3x; 0.67.6 is current.                                          |
+| OpenTelemetry      | None. `pi --mode json` gives a typed stdout event stream instead.                                                                                                                                            |
+| Live streaming     | `pi --mode rpc` (LF-delimited JSONL, bidirectional). In-process SDK via `createAgentSessionRuntime()`.                                                                                                       |
+| Proxy              | Viable. Custom providers configured in `~/.pi/agent/models.json`.                                                                                                                                            |
 
 **Takeaway.** The extension API is the single stable contract — more stable than the JSONL schema, which is under active churn. An in-process TS extension is the right adapter. JSONL tail is a fallback for unsupervised capture, but must watch `SessionHeader.version`.
 
 ### OpenCode
 
-| Surface | Status |
-|---|---|
-| Hooks | First-class plugin system (JS/TS, loaded from `.opencode/plugin/` or config). Rich events: session, message, `tool.execute.before/after` (mutable), permissions, file/LSP/command/TUI/shell. `chat.params` + auth hooks can intercept model requests. |
-| On-disk transcript | `~/.local/share/opencode/storage/`. **Migrating from JSON files to SQLite** — legacy layout still authoritative for blobs. Schema in `packages/sdk/js/src/gen/types.gen.ts`. |
-| OpenTelemetry | Not built-in. Community plugin `opencode-plugin-otel` exists. |
-| Live streaming | Headless server `opencode serve` exposes SSE at `GET /event` and `/global/event`, plus REST endpoints. SDK wraps as `client.event.subscribe()`. |
-| Proxy | Viable. Per-provider `baseURL` overrides. |
+| Surface            | Status                                                                                                                                                                                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hooks              | First-class plugin system (JS/TS, loaded from `.opencode/plugin/` or config). Rich events: session, message, `tool.execute.before/after` (mutable), permissions, file/LSP/command/TUI/shell. `chat.params` + auth hooks can intercept model requests. |
+| On-disk transcript | `~/.local/share/opencode/storage/`. **Migrating from JSON files to SQLite** — legacy layout still authoritative for blobs. Schema in `packages/sdk/js/src/gen/types.gen.ts`.                                                                          |
+| OpenTelemetry      | Not built-in. Community plugin `opencode-plugin-otel` exists.                                                                                                                                                                                         |
+| Live streaming     | Headless server `opencode serve` exposes SSE at `GET /event` and `/global/event`, plus REST endpoints. SDK wraps as `client.event.subscribe()`.                                                                                                       |
+| Proxy              | Viable. Per-provider `baseURL` overrides.                                                                                                                                                                                                             |
 
 **Takeaway.** The plugin API and `/event` SSE stream are the stable contracts. **Do not depend on on-disk files** — the SQLite migration will break file-tailers. Read authoritative state via the SDK client, not the filesystem.
 
 ### GitHub Copilot CLI (2025 agentic CLI)
 
-| Surface | Status |
-|---|---|
-| Hooks | Six events: `sessionStart`, `sessionEnd`, `userPromptSubmitted`, `preToolUse`, `postToolUse`, `errorOccurred`. Config at `~/.copilot/hooks/hooks.json` or `.github/hooks/hooks.json`. Only `preToolUse` can gate (`deny` enforced, `allow`/`ask` not). Payloads thin but include prompt/tool args/result. |
-| On-disk transcript | `~/.copilot/session-state/<sessionId>/events.jsonl` + SQLite index at `~/.copilot/session-store.db`. **Schema undocumented** — treat as unstable, pin to CLI version. Markdown export via `--share=PATH`. |
-| OpenTelemetry | No CLI-level OTel. OTel lives in `@github/copilot-sdk` (spans, OTLP HTTP/file exporters). Irrelevant for CLI users. |
-| Live streaming | `--output-format=json` gives JSONL on stdout. No pub-sub for attaching to a running interactive session — tail `events.jsonl`. |
-| Proxy | **Not viable.** `HTTPS_PROXY` honored for network routing, but no base-URL override (issue #2283 open); cert pinning and GitHub OAuth make MITM of model traffic impractical. |
+| Surface            | Status                                                                                                                                                                                                                                                                                                    |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Hooks              | Six events: `sessionStart`, `sessionEnd`, `userPromptSubmitted`, `preToolUse`, `postToolUse`, `errorOccurred`. Config at `~/.copilot/hooks/hooks.json` or `.github/hooks/hooks.json`. Only `preToolUse` can gate (`deny` enforced, `allow`/`ask` not). Payloads thin but include prompt/tool args/result. |
+| On-disk transcript | `~/.copilot/session-state/<sessionId>/events.jsonl` + SQLite index at `~/.copilot/session-store.db`. **Schema undocumented** — treat as unstable, pin to CLI version. Markdown export via `--share=PATH`.                                                                                                 |
+| OpenTelemetry      | No CLI-level OTel. OTel lives in `@github/copilot-sdk` (spans, OTLP HTTP/file exporters). Irrelevant for CLI users.                                                                                                                                                                                       |
+| Live streaming     | `--output-format=json` gives JSONL on stdout. No pub-sub for attaching to a running interactive session — tail `events.jsonl`.                                                                                                                                                                            |
+| Proxy              | **Not viable.** `HTTPS_PROXY` honored for network routing, but no base-URL override (issue #2283 open); cert pinning and GitHub OAuth make MITM of model traffic impractical.                                                                                                                             |
 
 **Takeaway.** Hooks + JSONL tail combined. Hooks for real-time low-latency signals (session start/end, tool calls); JSONL tail for full event fidelity. Include `--share` Markdown export on session end as a fallback. Accept schema instability and pin to tested CLI versions.
 
@@ -93,9 +93,9 @@ Even where the contracts differ, the shape is identical: subscribe to events in-
 
 ```ts
 interface AgentAdapter {
-  detect(): Promise<boolean>           // is this agent installed / configured?
-  install(): Promise<void>             // wire up hooks/plugins, idempotent
-  start(emit: (ev: NormalEvent) => void): Promise<Stop>
+  detect(): Promise<boolean>; // is this agent installed / configured?
+  install(): Promise<void>; // wire up hooks/plugins, idempotent
+  start(emit: (ev: NormalEvent) => void): Promise<Stop>;
 }
 ```
 
@@ -161,11 +161,13 @@ For an open-source self-install tool, the install ceremony is the UX. The ceilin
 ## Sources
 
 **Claude Code**
+
 - [Hooks reference](https://code.claude.com/docs/en/hooks.md)
 - [How Claude Code works: sessions](https://code.claude.com/docs/en/how-claude-code-works.md)
 - [Agent SDK observability (OTel)](https://code.claude.com/docs/en/agent-sdk/observability)
 
 **Codex CLI**
+
 - [Repo](https://github.com/openai/codex) · [Hooks docs](https://developers.openai.com/codex/hooks) · [PR #9796](https://github.com/openai/codex/pull/9796)
 - [Advanced config](https://developers.openai.com/codex/config-advanced) · [Config reference](https://developers.openai.com/codex/config-reference)
 - [Session/rollout discussion #3827](https://github.com/openai/codex/discussions/3827)
@@ -173,17 +175,20 @@ For an open-source self-install tool, the install ceremony is the UX. The ceilin
 - [MCP docs](https://developers.openai.com/codex/mcp) · [App server](https://developers.openai.com/codex/app-server)
 
 **Pi**
+
 - [pi-mono repo](https://github.com/badlogic/pi-mono/) · [coding-agent README](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/README.md)
 - [extensions.md](https://raw.githubusercontent.com/badlogic/pi-mono/main/packages/coding-agent/docs/extensions.md)
 - [session.md](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/session.md) · [json.md](https://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/docs/json.md)
 - [Author blog post](https://mariozechner.at/posts/2025-11-30-pi-coding-agent/)
 
 **OpenCode**
+
 - [Plugins](https://opencode.ai/docs/plugins/) · [Server](https://opencode.ai/docs/server/) · [SDK](https://opencode.ai/docs/sdk/) · [MCP](https://opencode.ai/docs/mcp-servers/)
 - [Storage/database (DeepWiki)](https://deepwiki.com/sst/opencode/2.9-storage-and-database)
 - [opencode-plugin-otel](https://github.com/DEVtheOPS/opencode-plugin-otel)
 
 **GitHub Copilot CLI**
+
 - [Hooks configuration](https://docs.github.com/en/copilot/reference/hooks-configuration) · [Using hooks](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/use-hooks)
 - [Chronicle (session data)](https://docs.github.com/en/copilot/concepts/agents/copilot-cli/chronicle) · [CLI config dir](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-config-dir-reference)
 - [CLI command reference](https://docs.github.com/en/copilot/reference/cli-command-reference)
