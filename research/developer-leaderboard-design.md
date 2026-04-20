@@ -12,8 +12,8 @@ A ranked table of developers in the org, sorted by today's spend descending. One
 
 Distinct from the **Live Sessions** table, which is keyed by session (many per user, ephemeral). The Leaderboard is keyed by user (one per person, persistent). Both surface the same underlying `user` handle, but answer different questions:
 
-- *Live Sessions*: "what's running right now?"
-- *Leaderboard*: "who is spending / working the most?"
+- _Live Sessions_: "what's running right now?"
+- _Leaderboard_: "who is spending / working the most?"
 
 ---
 
@@ -23,7 +23,7 @@ Distinct from the **Live Sessions** table, which is keyed by session (many per u
 
 The data model key is `user` / `handle`, but the rendered header is **Developer**. The product is aimed at engineering orgs watching coding-agent usage; "developer" is the role the table is about. "User" is an implementation detail.
 
-**Consequence.** Elsewhere in the UI (search placeholder: *"Search sessions, users…"*), `user` still leaks through. Either normalize to "developer" everywhere, or accept "user" as the generic term and "developer" as the contextual one. Prototype is inconsistent — pick one for v1.
+**Consequence.** Elsewhere in the UI (search placeholder: _"Search sessions, users…"_), `user` still leaks through. Either normalize to "developer" everywhere, or accept "user" as the generic term and "developer" as the contextual one. Prototype is inconsistent — pick one for v1.
 
 ### 2. Identity = name + handle + team + avatar hue
 
@@ -40,7 +40,7 @@ Team is **modeled on the user**, not inferred from sessions or repos. This impli
 
 ### 3. Primary sort key is today's spend
 
-The table is always sorted by `spend` descending. There is no sort control in the prototype — the ranking *is* the point. "Who cost the org the most money today" is the headline question.
+The table is always sorted by `spend` descending. There is no sort control in the prototype — the ranking _is_ the point. "Who cost the org the most money today" is the headline question.
 
 Rank column shows zero-padded two-digit position (`01`, `02`, …) — reads as a hard ordinal, not a score.
 
@@ -48,22 +48,22 @@ Rank column shows zero-padded two-digit position (`01`, `02`, …) — reads as 
 
 The table renders at three densities, each a strict subset of the previous:
 
-| Column     | Dense | Balanced | Sparse |
-| ---------- | :---: | :------: | :----: |
-| Rank       |  ✓    |    ✓     |        |
-| Developer  |  ✓    |    ✓     |   ✓    |
-| Today (spark) | ✓  |    ✓     |        |
-| Spend      |  ✓    |    ✓     |   ✓    |
-| Share      |  ✓    |    ✓     |        |
-| Sessions   |  ✓    |    ✓     |   ✓    |
-| Turns      |  ✓    |    ✓     |        |
-| Requests   |  ✓    |          |        |
-| Top agent  |  ✓    |    ✓     |   ✓    |
-| 7d Δ       |  ✓    |    ✓     |   ✓    |
+| Column        | Dense | Balanced | Sparse |
+| ------------- | :---: | :------: | :----: |
+| Rank          |   ✓   |    ✓     |        |
+| Developer     |   ✓   |    ✓     |   ✓    |
+| Today (spark) |   ✓   |    ✓     |        |
+| Spend         |   ✓   |    ✓     |   ✓    |
+| Share         |   ✓   |    ✓     |        |
+| Sessions      |   ✓   |    ✓     |   ✓    |
+| Turns         |   ✓   |    ✓     |        |
+| Requests      |   ✓   |          |        |
+| Top agent     |   ✓   |    ✓     |   ✓    |
+| 7d Δ          |   ✓   |    ✓     |   ✓    |
 
 The sparse view keeps: identity, money, session count, primary agent, trend. That's the "five-second answer" set. Dense view is for power users scanning rows.
 
-The Developer cell *itself* also densifies: in dense mode the secondary line (`@handle · team`) is hidden, avatar shrinks from 22px → 18px. Density is not just column visibility — it's per-cell too.
+The Developer cell _itself_ also densifies: in dense mode the secondary line (`@handle · team`) is hidden, avatar shrinks from 22px → 18px. Density is not just column visibility — it's per-cell too.
 
 ### 5. Three usage metrics at different granularities: Sessions, Turns, Requests
 
@@ -97,7 +97,7 @@ Implication: an **hourly user-spend rollup table** is probably required for v1. 
 
 Each user gets a single `topAgent` shown as a colored chip. The breakdown-by-agent lives in the separate **Spend by Agent** widget (org-level, not per-user).
 
-The per-user × per-agent matrix is *not* surfaced on the leaderboard. Decision: leaderboard answers "who," the spend-by-agent chart answers "what tool." Crossing them is a drill-down, not a table column. Avoids the 5-agent wide table problem.
+The per-user × per-agent matrix is _not_ surfaced on the leaderboard. Decision: leaderboard answers "who," the spend-by-agent chart answers "what tool." Crossing them is a drill-down, not a table column. Avoids the 5-agent wide table problem.
 
 ### 9. 7-day delta as trend, colored
 
@@ -121,7 +121,7 @@ Body text for names uses proportional font at `--font-ui`. The mono/proportional
 
 The leaderboard is **read-only scannable**, not a workbench. No checkboxes, no row-level action menu, no column filters in the table itself. Filtering/searching happens at the shell level ("Search sessions, users…" in the top bar).
 
-This is consistent with the DRI-as-queryer proposal (v1 arch doc §Review model): the leaderboard is one of several ways to *enter* a queryable firehose, not a mutation surface.
+This is consistent with the DRI-as-queryer proposal (v1 arch doc §Review model): the leaderboard is one of several ways to _enter_ a queryable firehose, not a mutation surface.
 
 ---
 
@@ -145,7 +145,7 @@ Call this a **`user_daily_rollup`** + **`user_hourly_rollup`** pair. Neither is 
 ## Open questions
 
 1. **"Developer" vs "user" naming.** Pick one; the prototype uses both. Ties into whether the product's vocabulary distinguishes "person who is being observed" from "person logged into the dashboard" (they overlap but aren't identical — a DRI is a user who may not be a reviewed developer on their own team).
-2. **Team modeling.** Is `team` a free-form string on the user, or a first-class `Team` entity with its own DRI? Unresolved in the architecture doc; the leaderboard commits to *at least* a string.
+2. **Team modeling.** Is `team` a free-form string on the user, or a first-class `Team` entity with its own DRI? Unresolved in the architecture doc; the leaderboard commits to _at least_ a string.
 3. **Click-through target.** Where does a row click go? A per-user "all their sessions today" view? A longer-range profile? Not drawn.
 4. **Delta color semantics.** Green-for-up is cheerful but misleading on a spend metric. Consider neutral (both directions gray), or invert for cost columns specifically.
 5. **Hourly rollup table.** The sparkline demands it — confirm the schema and retention.

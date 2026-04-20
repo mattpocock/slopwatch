@@ -1,9 +1,24 @@
 {
   "name": "slopwatch",
   "private": true,
-  "workspaces": ["apps/*", "listeners/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "listeners/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "bun run --filter '*' typecheck",
+    "test": "bun run --filter '*' test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "ci": "bun run format:check && bun run typecheck && bun run test",
+    "prepare": "husky"
+  },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@typescript/native-preview": "7.0.0-dev.20260420.1",
+    "husky": "9.1.7",
+    "lint-staged": "16.4.0",
+    "prettier": "3.8.3"
   }
 }
