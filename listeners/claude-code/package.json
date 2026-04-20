@@ -1,0 +1,12 @@
+{
+  "name": "@slopwatch/listener-claude-code",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "@slopwatch/wire": "workspace:*"
+  }
+}

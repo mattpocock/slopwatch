@@ -1,0 +1,9 @@
+{
+  "name": "slopwatch",
+  "private": true,
+  "workspaces": ["apps/*", "listeners/*", "packages/*"],
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/bun": "latest"
+  }
+}
