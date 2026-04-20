@@ -1,4 +1,4 @@
-import { sendEvents, type NormalEvent } from "@slopwatch/wire";
+import { sendEvents, type NormalEvent } from "@slopwatch/events";
 
 const _stub: NormalEvent = { kind: "stub" };
 void sendEvents;

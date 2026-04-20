@@ -1,5 +1,5 @@
 {
-  "name": "@slopwatch/wire",
+  "name": "@slopwatch/events",
   "version": "0.0.0",
   "private": true,
   "type": "module",

@@ -36,6 +36,10 @@ _Avoid_: backend, hub, daemon, collector.
 A person with an identity in one Slopwatch organization — may run coding agents, review sessions, administer the Server, or any combination.
 _Avoid_: developer, member, account. ("Developer" is a role a **User** plays when running a coding agent; not every **User** is a developer.)
 
+**Event**:
+A normalized record a **Listener** produces and ships to the **Server** — the unit of communication between them. Sessions, Turns, and Model requests are all carried as Events. The shared package that defines the Event schema and the typed Listener→Server client is `@slopwatch/events`; the TypeScript type is `NormalEvent` (to avoid colliding with the global DOM `Event`).
+_Avoid_: message, payload, wire format, record.
+
 ## Relationships
 
 - A **Session** contains a DAG of **Turns**; most agents produce a linear DAG, Pi can branch.
@@ -43,6 +47,7 @@ _Avoid_: developer, member, account. ("Developer" is a role a **User** plays whe
 - A **Subagent** is a **Session** whose `parent_session_id` points to the spawning **Session** and whose `spawned_by_turn_id` points to the **Turn** that launched it.
 - A **Listener** produces **Sessions**, **Turns**, and **Model requests** for exactly one **Coding agent**; it runs either as a subprocess (Claude Code, Codex, Copilot) or as an in-process extension (Pi, OpenCode).
 - Many **Listeners** POST to one **Server**; the **Server** is the only component that talks to Postgres.
+- **Listeners** and the **Server** communicate by exchanging **Events** defined in `@slopwatch/events`.
 
 ## Example dialogue
 
@@ -56,3 +61,4 @@ _Avoid_: developer, member, account. ("Developer" is a role a **User** plays whe
 - Resumes (Codex `codex resume`, Pi resume, Claude Code compaction-continue) are unresolved — defer until v1 is running.
 - "listener" collides with in-agent event-listener terminology (Pi `pi.on(...)`, OpenCode plugin events). Accepted for now; revisit if docs get confusing.
 - "user" vs "developer" — resolved: the entity is **User**; "developer" is a role (the subset of **Users** who run coding agents observed by Slopwatch). The prototype leaderboard column labelled "Developer" is a role-filtered view of **Users**, not a separate entity.
+- "wire" vs "events" — resolved: the Listener↔Server channel is described in terms of **Events**, not "wire." `packages/wire` has been renamed `packages/events` (package name `@slopwatch/events`). The TypeScript type stays `NormalEvent` to avoid colliding with the global DOM `Event` type.

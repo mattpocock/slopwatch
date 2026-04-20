@@ -9,6 +9,6 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@slopwatch/wire": "workspace:*"
+    "@slopwatch/events": "workspace:*"
   }
 }

@@ -16,27 +16,27 @@
       "name": "@slopwatch/server",
       "version": "0.0.0",
       "dependencies": {
-        "@slopwatch/wire": "workspace:*",
+        "@slopwatch/events": "workspace:*",
       },
     },
     "listeners/claude-code": {
       "name": "@slopwatch/listener-claude-code",
       "version": "0.0.0",
       "dependencies": {
-        "@slopwatch/wire": "workspace:*",
+        "@slopwatch/events": "workspace:*",
       },
     },
-    "packages/wire": {
-      "name": "@slopwatch/wire",
+    "packages/events": {
+      "name": "@slopwatch/events",
       "version": "0.0.0",
     },
   },
   "packages": {
+    "@slopwatch/events": ["@slopwatch/events@workspace:packages/events"],
+
     "@slopwatch/listener-claude-code": ["@slopwatch/listener-claude-code@workspace:listeners/claude-code"],
 
     "@slopwatch/server": ["@slopwatch/server@workspace:apps/server"],
-
-    "@slopwatch/wire": ["@slopwatch/wire@workspace:packages/wire"],
 
     "@types/bun": ["@types/bun@1.3.12", "", { "dependencies": { "bun-types": "1.3.12" } }, "sha512-DBv81elK+/VSwXHDlnH3Qduw+KxkTIWi7TXkAeh24zpi5l0B2kUg9Ga3tb4nJaPcOFswflgi/yAvMVBPrxMB+A=="],
 
