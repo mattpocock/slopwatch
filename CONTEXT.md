@@ -32,6 +32,10 @@ _Avoid_: sidecar, adapter, capturer, probe, collector.
 The single self-hosted process that receives events from Listeners, stores them in Postgres, serves the dashboard, and hosts the admin plane — one per organization.
 _Avoid_: backend, hub, daemon, collector.
 
+**User**:
+A person with an identity in one Slopwatch organization — may run coding agents, review sessions, administer the Server, or any combination.
+_Avoid_: developer, member, account. ("Developer" is a role a **User** plays when running a coding agent; not every **User** is a developer.)
+
 ## Relationships
 
 - A **Session** contains a DAG of **Turns**; most agents produce a linear DAG, Pi can branch.
@@ -51,3 +55,4 @@ _Avoid_: backend, hub, daemon, collector.
 - "session" in Pi has branches; these are **not** separate **Sessions** but nodes in a single **Session**'s DAG.
 - Resumes (Codex `codex resume`, Pi resume, Claude Code compaction-continue) are unresolved — defer until v1 is running.
 - "listener" collides with in-agent event-listener terminology (Pi `pi.on(...)`, OpenCode plugin events). Accepted for now; revisit if docs get confusing.
+- "user" vs "developer" — resolved: the entity is **User**; "developer" is a role (the subset of **Users** who run coding agents observed by Slopwatch). The prototype leaderboard column labelled "Developer" is a role-filtered view of **Users**, not a separate entity.
